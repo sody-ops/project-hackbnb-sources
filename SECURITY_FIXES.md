@@ -12,8 +12,8 @@ Branche : `fix/securite`. Les 8 vulnérabilités du rapport de pentest sont corr
 | D4 | Critique | Secret de paiement prévisible | `back/api/bookings/bookings_api.py` l.94-95 | `sha512(str(int(time.time())))` | `secrets.token_urlsafe(32)` (256 bits), comparaison en temps constant (`secrets.compare_digest`) et **vérification du statut réel auprès de Stripe** (`payment_status == "paid"`) avant `is_paid = True`. La référence de réservation utilise aussi `secrets.choice` (au lieu de `random`) |
 | D5 | Majeure | E-mail de l'hôte exposé | `back/api/rooms/rooms_models.py` l.34-35 | `output["host"] = self.host_user.to_dict()` (avec `email`) | `{"id": ..., "name": ...}` uniquement |
 | D6 | Majeure | Clé API Stripe versionnée | `docker-compose.yml` l.10 | `STRIPE_API_KEY: sk_test_51RhVf…` en clair | `${STRIPE_API_KEY:?…}` lu depuis un `.env` non versionné (`.gitignore` + `.env.example`) |
-| D7 | Majeure | En-têtes de sécurité absents | `apache/apache-prod.conf` | aucun | `Content-Security-Policy`, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer` |
-| D8 | Mineure | Flask en mode debug | `back/app.py` l.43 | `debug=True` | `debug=os.getenv("FLASK_DEBUG", "0") == "1"` (désactivé par défaut) |
+| D7 | Majeure | En-têtes de sécurité absents → XSS | `apache/apache-prod.conf` + `front/src/pages/room/Room.tsx:52`, `front/src/pages/booking/Booking.tsx:49` | aucun en-tête ; `dangerouslySetInnerHTML={{__html: room.description}}` | `Content-Security-Policy`, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer` **et** HTML assaini avec `DOMPurify.sanitize(...)` (dépendance `dompurify`) |
+| D8 | Mineure | Divulgation d'informations dans les en-têtes de réponse | `apache/apache-prod.conf`, `back/app.py` l.43 | `Server: Werkzeug/3.1.9 Python/3.13.x` relayé par Apache, signature `Apache/2.4.58 (Ubuntu)` sur les pages d'erreur, Flask `debug=True` | `ServerTokens Prod`, `ServerSignature Off`, `Header unset Server` / `X-Powered-By` sur les réponses proxifiées → `Server: Apache` seul ; `debug=os.getenv("FLASK_DEBUG", "0") == "1"` (désactivé par défaut) |
 
 **CSP (D7)** : la politique `default-src 'self'` seule bloquerait la police Google Fonts importée par `front/src/index.css`. Elle est donc complétée par `style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'`.
 
@@ -32,6 +32,8 @@ Tests en local : back Flask sur :9001, Apache 2.4.58 avec `apache-prod.conf`, St
 | D4 | deux nouvelles réservations | secret déductible | secrets aléatoires distincts de 43 caractères |
 | D5 | `/rooms/1` | `host.email` présent | `host = {id, name}` |
 | D7 | `curl -I /` | aucun en-tête | les 4 en-têtes présents, `apache2ctl configtest` OK |
+| D7 | description piégée `<img src=x onerror=…><script>…</script>` ouverte dans Chromium (front buildé derrière Apache) | script exécuté | `onerror` et `<script>` retirés par DOMPurify, rien ne s'exécute (la CSP bloque en plus le gestionnaire inline) ; aucune violation CSP sur les pages normales |
+| D8 | `curl -I /api/rooms/1`, page d'erreur Apache | `Server: Werkzeug/3.1.9 Python/3.13.18`, `Apache/2.4.58 (Ubuntu)` | `Server: Apache`, aucune signature |
 | D8 | erreur 500 (`POST /bookings/` vide), `/console` | trace Werkzeug + console de debug | page 500 générique, `/console` → 404, log « Debug mode: off » |
 
 ## Actions restantes hors code (obligatoires)
@@ -43,6 +45,5 @@ Tests en local : back Flask sur :9001, Apache 2.4.58 avec `apache-prod.conf`, St
 
 ## Autres faiblesses relevées pendant la correction (hors périmètre des 8)
 
-- **XSS stockée possible** : `dangerouslySetInnerHTML={{__html: room.description}}` dans `front/src/pages/room/Room.tsx:52` et `booking/Booking.tsx:49`. La CSP la limite, mais il faut assainir le HTML (DOMPurify) ou l'afficher en texte.
 - **Mots de passe hachés en MD5 sans sel** (`back/api/users/users_models.py`) : passer à `werkzeug.security.generate_password_hash` (scrypt/pbkdf2) ou à bcrypt/argon2.
 - `requests` est utilisé par `services/stripe.py` sans figurer dans `requirements.txt` (il est installé via `stripe`).
