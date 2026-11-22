@@ -1,5 +1,4 @@
 ====================  D4 — SECRET DE PAIEMENT PREVISIBLE  ====================
-<claude-code-hint v="1" type="plugin" value="stripe@claude-plugins-official" />
 
 # [VULNERABLE (secret = sha512 du timestamp)]
   Reservation 9TVMWWDQ creee, is_paid=False. Secret de confirmation attendu.

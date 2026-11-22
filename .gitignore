@@ -2,3 +2,7 @@
 .env
 .env.*
 !.env.example
+
+# Artefacts de rendu QA
+livrables/*.jpg
+livrables/*.pdf
