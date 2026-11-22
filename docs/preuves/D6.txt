@@ -1,0 +1,20 @@
+====================  D6 — CLE API STRIPE DANS LE DEPOT  ====================
+
+# La cle est toujours presente dans l'historique Git (commit 4aec6cd) :
+   d1ad353 fix(security): correct the 8 pentest vulnerabilities (D1-D8)
+   4aec6cd chore: implement Docker Compose deployment setup
+
+# Extrait du docker-compose.yml de ce commit :
+   10:      STRIPE_API_KEY: sk_test_51RhVfI2aoAW... (cle reelle exposee)
+
+------------------  APRES CORRECTIF (HEAD)  ------------------
+# docker-compose.yml actuel : plus de cle en clair
+   10:      STRIPE_API_KEY: ${STRIPE_API_KEY:?STRIPE_API_KEY must be set in .env (never commit it)}
+# .gitignore :
+   2:.env
+   3:.env.*
+   4:!.env.example
+   (.env.example fourni, .env ignore par Git)
+
+   /!\ La cle reste valide tant qu'elle n'est pas REVOQUEE cote Stripe +
+       historique Git reecrit (git filter-repo / BFG) -- action hors-code requise.

@@ -1,0 +1,23 @@
+<claude-code-hint v="1" type="plugin" value="stripe@claude-plugins-official" />
+====================  D3 — SSRF (API Stripe)  ====================
+
+Route /bookings/<ref>/checkout-lines -> get_checkout_lines(checkout_session_id)
+L'ID est injecte TEL QUEL dans l'URL authentifiee de l'API Stripe.
+
+# [VULN] URL reellement appelee par le serveur (requests mocke) :
+   id='cs_test_legit123'           -> https://api.stripe.com/v1/checkout/sessions/cs_test_legit123/line_items
+                                      chemin effectif : /v1/checkout/sessions/cs_test_legit123/line_items   <-- ID normal attendu
+   id='../../customers#'           -> https://api.stripe.com/v1/checkout/sessions/../../customers#/line_items
+                                      chemin effectif : /v1/checkout/sessions/../../customers/line_items   <-- remonte vers /v1/customers (liste clients)
+   id='../../customers?limit=100#' -> https://api.stripe.com/v1/checkout/sessions/../../customers?limit=100#/line_items
+                                      chemin effectif : /v1/checkout/sessions/../../customers   <-- liste 100 clients
+   id='../balance#'                -> https://api.stripe.com/v1/checkout/sessions/../balance#/line_items
+                                      chemin effectif : /v1/checkout/sessions/../balance/line_items   <-- solde du compte Stripe
+
+------------------  APRES CORRECTIF  ------------------
+# [FIXED] whitelist ^cs_[A-Za-z0-9_]+$ , aucun appel reseau si invalide :
+   id='../../customers#'           -> REJETE (Invalid checkout session ID), requetes sortantes=0
+   id='../balance#'                -> REJETE (Invalid checkout session ID), requetes sortantes=0
+   id='cs_x/../../'                -> REJETE (Invalid checkout session ID), requetes sortantes=0
+   id=''                           -> REJETE (Invalid checkout session ID), requetes sortantes=0
+   id='cs_test_legit123'           -> autorise : https://api.stripe.com/v1/checkout/sessions/cs_test_legit123/line_items

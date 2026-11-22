@@ -32,6 +32,7 @@ class Room(db.Model):
         }
 
         if self.host_user:
-            output["host"] = self.host_user.to_dict()
+            # Public endpoint: never expose host e-mail
+            output["host"] = {"id": self.host_user.id, "name": self.host_user.name}
 
         return output

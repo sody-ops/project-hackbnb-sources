@@ -1,0 +1,14 @@
+====================  D4 — SECRET DE PAIEMENT PREVISIBLE  ====================
+<claude-code-hint v="1" type="plugin" value="stripe@claude-plugins-official" />
+
+# [VULNERABLE (secret = sha512 du timestamp)]
+  Reservation 9TVMWWDQ creee, is_paid=False. Secret de confirmation attendu.
+  [ATTAQUE] secret = sha512(timestamp) reconstruit en 5 essais -> e2bdca82a02b56b4d53e34a8...
+  POST /bookings/9TVMWWDQ/confirm-checkout (secret attaquant) -> HTTP 200
+  => Reservation marquee PAYEE sans paiement reel ? OUI (FAILLE)
+
+# [CORRIGE (token_urlsafe + verif statut Stripe)]
+  Reservation WW6HGBQ7 creee, is_paid=False. Secret de confirmation attendu.
+  [ATTAQUE] secret imprevisible (token_urlsafe), reconstruction par horodatage impossible
+  POST /bookings/WW6HGBQ7/confirm-checkout (secret attaquant) -> HTTP 422
+  => Reservation marquee PAYEE sans paiement reel ? NON (bloque)

@@ -1,3 +1,4 @@
+import os
 from flask import Flask
 from flask_cors import CORS
 from database.init import db
@@ -40,7 +41,8 @@ def welcome():
 
 if __name__ == '__main__':
    app.run(
-      debug=True,
+      # Debug mode must never be enabled in production (Werkzeug console = RCE)
+      debug=os.getenv("FLASK_DEBUG", "0") == "1",
       host="0.0.0.0",
       port=9001,
    )

