@@ -1,0 +1,7 @@
+====================  D5 — FUITE EMAIL HOTE  ====================
+
+# [VULN :9001]  GET /rooms/1  -> champ host.email expose publiquement
+   host = {"email": "elodie.marchand@hackbnb.fr", "id": 1, "name": "John Doe"}
+
+# [FIXED :9002] GET /rooms/1  -> email retire
+   host = {"id": 1, "name": "John Doe"}

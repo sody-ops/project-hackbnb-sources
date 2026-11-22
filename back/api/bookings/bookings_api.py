@@ -134,7 +134,10 @@ def confirm_booking_checkout(reference: str):
         return {'error': 'Booking not found'}, 404
     
     provided_secret = (request.get_json(silent=True) or {}).get("confirmationSecret")
-    if not isinstance(provided_secret, str) or not secrets.compare_digest(booking.checkout_confirmation_secret, provided_secret):
+    # Constant-time comparison on bytes (compare_digest raises on non-ASCII str)
+    if not isinstance(provided_secret, str) or not secrets.compare_digest(
+        booking.checkout_confirmation_secret.encode("utf-8"), provided_secret.encode("utf-8")
+    ):
         return {'error': 'Invalid confirmation secret'}, 422
 
     # Defense in depth: check the actual payment status server-side with Stripe
