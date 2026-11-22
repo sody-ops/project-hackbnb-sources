@@ -1,4 +1,5 @@
 import os
+import re
 import stripe
 import requests
 
@@ -28,7 +29,20 @@ def create_checkout(reference, name, unit_price, quantity, confirmation_secret):
         ],
     )
 
+def is_checkout_paid(checkout_session_id):
+    """
+        Ask Stripe for the real payment status of a checkout session
+        (never trust the client to tell us a payment succeeded)
+    """
+    stripe.api_key = os.getenv('STRIPE_API_KEY')
+    session = stripe.checkout.Session.retrieve(checkout_session_id)
+    return session.payment_status == "paid"
+
 def get_checkout_lines(checkout_session_id):
+    # Strict whitelist of Stripe checkout session IDs to prevent SSRF / path injection
+    if not isinstance(checkout_session_id, str) or not re.fullmatch(r"cs_[A-Za-z0-9_]+", checkout_session_id):
+        raise ValueError("Invalid checkout session ID")
+
     url = f"https://api.stripe.com/v1/checkout/sessions/{checkout_session_id}/line_items"
 
     session = requests.Session()
