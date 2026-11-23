@@ -1,0 +1,41 @@
+rules:
+  - id: hackbnb-d1-sql-injection
+    languages: [python]
+    severity: ERROR
+    message: "D1 - Injection SQL : entree utilisateur concatenee dans text() SQLAlchemy (CWE-89)."
+    metadata: {faille: D1, owasp: "A03:2021-Injection"}
+    patterns: [{pattern: 'text(f"...{$X}...")'}]
+  - id: hackbnb-d2-path-traversal
+    languages: [python]
+    severity: ERROR
+    message: "D2 - Path traversal : nom de fichier utilisateur concatene dans send_file (CWE-22)."
+    metadata: {faille: D2, owasp: "A01:2021-Broken Access Control"}
+    patterns: [{pattern: 'send_file("..." + $X)'}]
+  - id: hackbnb-d4-predictable-secret
+    languages: [python]
+    severity: ERROR
+    message: "D4 - Secret previsible : secret derive d'un timestamp time.time() (CWE-330)."
+    metadata: {faille: D4, owasp: "A02:2021-Cryptographic Failures"}
+    patterns:
+      - pattern-inside: |
+          $R = str(int(time.time()))
+          ...
+      - pattern: hashlib.sha512($R.encode(...)).hexdigest()
+  - id: hackbnb-d8-flask-debug
+    languages: [python]
+    severity: ERROR
+    message: "D8 - Flask debug=True : debugger Werkzeug expose en prod (CWE-489)."
+    metadata: {faille: D8, owasp: "A05:2021-Security Misconfiguration"}
+    patterns: [{pattern: '$APP.run(..., debug=True, ...)'}]
+  - id: hackbnb-d3-ssrf
+    languages: [generic]
+    severity: ERROR
+    message: "D3 - SSRF : valeur utilisateur inseree dans l'URL de l'API Stripe appelee cote serveur (CWE-918)."
+    metadata: {faille: D3, owasp: "A10:2021-SSRF"}
+    patterns: [{pattern-regex: 'https://api\.stripe\.com/[^"]*\{[a-z_]+\}'}]
+  - id: hackbnb-d6-hardcoded-stripe-key
+    languages: [generic]
+    severity: ERROR
+    message: "D6 - Secret en clair : cle API Stripe dans un fichier versionne (CWE-798)."
+    metadata: {faille: D6, owasp: "A07:2021-Identification/Auth Failures"}
+    patterns: [{pattern-regex: 'sk_(test|live)_[A-Za-z0-9]+'}]

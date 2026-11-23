@@ -1,0 +1,54 @@
+                   
+                   
+┌─────────────────┐
+│ 6 Code Findings │
+└─────────────────┘
+                                     
+    back/api/bookings/bookings_api.py
+   ❯❯❱ audit-sast.hackbnb-d4-predictable-secret
+          ❰❰ Blocking ❱❱
+          D4 - Secret previsible : secret derive d'un timestamp time.time() (CWE-330).
+                                                                                      
+           95┆ checkout_confirmation_secret = hashlib.sha512(random_string.encode('utf-8')).hexdigest() #
+               hash it with safe sha512                                                                  
+                               
+    back/api/rooms/rooms_api.py
+   ❯❯❱ audit-sast.hackbnb-d1-sql-injection
+          ❰❰ Blocking ❱❱
+          D1 - Injection SQL : entree utilisateur concatenee dans text() SQLAlchemy (CWE-89).
+                                                                                             
+           18┆ rooms = Room.query.filter(text(f"category = '{category}'")).all()
+                                   
+    back/api/uploads/uploads_api.py
+   ❯❯❱ audit-sast.hackbnb-d2-path-traversal
+          ❰❰ Blocking ❱❱
+          D2 - Path traversal : nom de fichier utilisateur concatene dans send_file (CWE-22).
+                                                                                             
+            7┆ return send_file('uploads/' + request.args.get("name"))
+               
+    back/app.py
+   ❯❯❱ audit-sast.hackbnb-d8-flask-debug
+          ❰❰ Blocking ❱❱
+          D8 - Flask debug=True : debugger Werkzeug expose en prod (CWE-489).
+                                                                             
+           42┆ app.run(
+           43┆    debug=True,
+           44┆    host="0.0.0.0",
+           45┆    port=9001,
+           46┆ )
+                           
+    back/services/stripe.py
+   ❯❯❱ audit-sast.hackbnb-d3-ssrf
+          ❰❰ Blocking ❱❱
+          D3 - SSRF : valeur utilisateur inseree dans l'URL de l'API Stripe appelee cote serveur (CWE-918).
+                                                                                                           
+           32┆ url = f"https://api.stripe.com/v1/checkout/sessions/{checkout_session_id}/line_items"
+                      
+    docker-compose.yml
+   ❯❯❱ audit-sast.hackbnb-d6-hardcoded-stripe-key
+          ❰❰ Blocking ❱❱
+          D6 - Secret en clair : cle API Stripe dans un fichier versionne (CWE-798).
+                                                                                    
+           10┆ STRIPE_API_KEY: sk_test_REDACTED
+               wxs8lteAbxfIFwhrRiIkho00IWLuBOs3                                                           
+
