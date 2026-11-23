@@ -1,5 +1,5 @@
 from typing import List
-from hashlib import md5
+from werkzeug.security import generate_password_hash, check_password_hash
 from database.init import db
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -23,8 +23,8 @@ class User(db.Model):
         }
 
     def set_password(self, clear_password: str):
-        self.password_hash = md5(clear_password.encode("utf-8")).hexdigest()
-    
+        # Salted, slow hash (scrypt by default) instead of unsalted MD5
+        self.password_hash = generate_password_hash(clear_password)
+
     def is_valid_password(self, clear_password: str) -> bool:
-        clear_password_hash = md5(clear_password.encode("utf-8")).hexdigest()
-        return clear_password_hash == self.password_hash
+        return check_password_hash(self.password_hash, clear_password)

@@ -43,6 +43,8 @@ if __name__ == '__main__':
    app.run(
       # Debug mode must never be enabled in production (Werkzeug console = RCE)
       debug=os.getenv("FLASK_DEBUG", "0") == "1",
-      host="0.0.0.0",
+      # Bind to loopback by default; set FLASK_HOST=0.0.0.0 only where needed
+      # (e.g. the dev compose, where Apache runs in a separate container)
+      host=os.getenv("FLASK_HOST", "127.0.0.1"),
       port=9001,
    )

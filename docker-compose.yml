@@ -8,6 +8,8 @@ services:
     environment:
       APP_ORIGIN_HOST: http://localhost:9000
       STRIPE_API_KEY: ${STRIPE_API_KEY:?STRIPE_API_KEY must be set in .env (never commit it)}
+      # Dev only: Apache runs in a separate container, so the API must listen on all interfaces here
+      FLASK_HOST: 0.0.0.0
 
   front:
     image: node:22

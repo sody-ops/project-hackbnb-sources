@@ -8,12 +8,13 @@ def seed_database():
     if User.query.count() > 0 or Room.query.count() > 0:
       return
 
-    db.session.add(User(
+    john = User(
         id=1,
         name="John Doe",
         email="john@doe.com",
-        password_hash="XX",
-    ))
+    )
+    john.set_password("password")
+    db.session.add(john)
 
     db.session.add(Room(
         id=1,
